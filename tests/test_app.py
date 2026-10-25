@@ -146,6 +146,14 @@ def client_with_temp_db(monkeypatch):
     fd, path = tempfile.mkstemp(suffix=".db")
     os.close(fd)
     monkeypatch.setenv("DB_PATH", path)
+    # main.on_startup() now refuses to start (raises RuntimeError) unless
+    # DJ_KEY is set to at least main.MIN_DJ_KEY_LENGTH characters, and
+    # entering the TestClient context below runs that startup event before
+    # any test body gets a chance to set DJ_KEY itself. Seed a valid
+    # placeholder key here so startup succeeds; tests that care about a
+    # specific key value override it afterwards with their own monkeypatch
+    # calls, same as before.
+    monkeypatch.setenv("DJ_KEY", "a" * 20)
     db.init_db(db.get_db_path())
     try:
         with TestClient(main.app) as client:
@@ -197,3 +205,97 @@ def test_dj_key_helper_function_directly(monkeypatch):
 
     monkeypatch.delenv("DJ_KEY", raising=False)
     assert main._dj_key_is_valid("abc") is False
+
+
+# ---------------------------------------------------------------------------
+# 3. Startup DJ_KEY validation (main.py, no TestClient / no HTTP involved)
+# ---------------------------------------------------------------------------
+
+
+def test_on_startup_raises_when_dj_key_unset(temp_db_path, monkeypatch):
+    monkeypatch.setenv("DB_PATH", temp_db_path)
+    monkeypatch.delenv("DJ_KEY", raising=False)
+
+    with pytest.raises(RuntimeError):
+        main.on_startup()
+
+
+def test_on_startup_raises_when_dj_key_too_short(temp_db_path, monkeypatch):
+    monkeypatch.setenv("DB_PATH", temp_db_path)
+    monkeypatch.setenv("DJ_KEY", "short")
+
+    with pytest.raises(RuntimeError):
+        main.on_startup()
+
+
+def test_on_startup_succeeds_when_dj_key_is_exactly_minimum_length(
+    temp_db_path, monkeypatch
+):
+    monkeypatch.setenv("DB_PATH", temp_db_path)
+    monkeypatch.setenv("DJ_KEY", "a" * main.MIN_DJ_KEY_LENGTH)
+
+    main.on_startup()  # must not raise
+
+
+def test_on_startup_succeeds_when_dj_key_is_longer_than_minimum(
+    temp_db_path, monkeypatch
+):
+    monkeypatch.setenv("DB_PATH", temp_db_path)
+    monkeypatch.setenv("DJ_KEY", "a" * (main.MIN_DJ_KEY_LENGTH + 10))
+
+    main.on_startup()  # must not raise
+
+
+def test_dj_key_startup_error_flags_missing_or_short_keys():
+    """Unit-level check of main._dj_key_startup_error, independent of HTTP."""
+    assert main._dj_key_startup_error(None)  # missing -> truthy message
+    assert main._dj_key_startup_error("")  # empty -> truthy message
+    assert main._dj_key_startup_error("a" * 15)  # one short of the minimum
+
+
+def test_dj_key_startup_error_accepts_minimum_length_key():
+    assert main._dj_key_startup_error("a" * 16) is None
+
+
+# ---------------------------------------------------------------------------
+# 4. GET /qr (main.py, via FastAPI's TestClient)
+# ---------------------------------------------------------------------------
+
+
+def test_qr_page_renders_svg_and_caption_when_public_url_configured(
+    client_with_temp_db, monkeypatch
+):
+    monkeypatch.setenv("PUBLIC_URL", "https://example.ngrok-free.app")
+
+    # Deliberately no "key" anywhere in this request: /qr is public.
+    response = client_with_temp_db.get("/qr")
+
+    assert response.status_code == 200
+    assert "<svg" in response.text
+    assert "Scan to request a song" in response.text
+
+
+def test_qr_page_returns_plain_500_when_public_url_missing(
+    client_with_temp_db, monkeypatch
+):
+    monkeypatch.delenv("PUBLIC_URL", raising=False)
+
+    response = client_with_temp_db.get("/qr")
+
+    assert response.status_code == 500
+    # A plain, clear message - not an HTML error/stack-trace page.
+    content_type = response.headers.get("content-type", "")
+    assert "text/plain" in content_type
+    assert "<html" not in response.text.lower()
+    assert "PUBLIC_URL" in response.text
+
+
+def test_qr_page_does_not_require_a_key_query_param(
+    client_with_temp_db, monkeypatch
+):
+    monkeypatch.setenv("PUBLIC_URL", "https://example.ngrok-free.app")
+
+    response = client_with_temp_db.get("/qr")  # no "key" in the URL at all
+
+    assert response.status_code == 200
+    assert "key" not in str(response.request.url)

@@ -40,21 +40,9 @@ placeholder values, is committed.
 
 ## Running the app
 
-### Quick local run
+### Gig mode (`start.ps1`) - quick path for a real gig
 
-With `.env` filled in:
-
-```powershell
-.venv312\Scripts\python.exe -m uvicorn main:app --reload
-```
-
-- Guest request form: http://127.0.0.1:8000/
-- DJ queue page: http://127.0.0.1:8000/dj?key=&lt;your DJ_KEY&gt;
-- Printable QR page: http://127.0.0.1:8000/qr
-
-### Gig mode (`start.ps1`)
-
-For a live event, `start.ps1` loads `.env`, starts uvicorn on
+For a live event, `.\start.ps1` loads `.env`, starts uvicorn on
 `127.0.0.1:8000` in its own window, starts `ngrok http 8000 --url
 $PUBLIC_URL` in another window (tunneling your `PUBLIC_URL` to the local
 server), and prints the guest URL and the full DJ URL (with key) to
@@ -67,6 +55,29 @@ copy/paste:
 Requires `.env` to exist (see Configuration above) and `ngrok` to be
 installed and on your `PATH`. If `.env` is missing, the script exits with
 a clear error instead of starting anything.
+
+### Manual / local dev (no ngrok)
+
+For local development you don't need `.env` or ngrok at all - the same
+uvicorn command as before still works, as long as `DJ_KEY` is set in your
+shell and is at least 16 characters (the new startup check applies here
+too):
+
+```powershell
+$env:DJ_KEY = "a-dev-only-key-at-least-16-chars"
+.venv312\Scripts\python.exe -m uvicorn main:app --reload
+```
+
+Then hit the app directly at http://127.0.0.1:8000/:
+
+- Guest request form: http://127.0.0.1:8000/
+- DJ queue page: http://127.0.0.1:8000/dj?key=&lt;your DJ_KEY&gt;
+- Printable QR page: http://127.0.0.1:8000/qr (also needs `PUBLIC_URL`
+  set - via `.env` or `$env:PUBLIC_URL` - otherwise it returns a 500)
+
+If you have a filled-in `.env` in the repo root instead, it's loaded
+automatically (via `python-dotenv`) and you can skip the `$env:DJ_KEY`
+line above.
 
 Requests are stored in a local SQLite file (`song_requests.db` in the repo
 root by default); it's created automatically on first run and is excluded
