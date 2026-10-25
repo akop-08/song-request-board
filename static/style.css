@@ -187,3 +187,70 @@ input[type="text"]:focus {
   font-size: 1.1rem;
   margin-top: 40px;
 }
+
+/* ------------------------------------------------------------------ */
+/* /qr page: public, printable "scan to request a song" sign.         */
+/* New, self-contained block - does not alter any rule above this.    */
+/* ------------------------------------------------------------------ */
+
+.qr-page {
+  text-align: center;
+}
+
+.qr-page h1 {
+  margin-bottom: 24px;
+}
+
+.qr-code {
+  display: flex;
+  justify-content: center;
+  margin: 0 auto 24px;
+}
+
+.qr-code svg {
+  width: 100%;
+  max-width: 320px;
+  height: auto;
+}
+
+.qr-fallback-label {
+  color: #666;
+  margin: 0 0 4px;
+}
+
+.qr-fallback-url {
+  font-weight: 700;
+  word-break: break-all;
+  margin: 0;
+}
+
+@media print {
+  body {
+    background: #ffffff;
+  }
+
+  .qr-page {
+    max-width: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .qr-page h1 {
+    color: #000000;
+    font-size: 2rem;
+  }
+
+  .qr-code {
+    margin: 0 auto 32px;
+  }
+
+  .qr-code svg {
+    width: 80vw;
+    max-width: 80vw;
+  }
+
+  .qr-fallback-label,
+  .qr-fallback-url {
+    color: #000000;
+  }
+}

@@ -1,16 +1,27 @@
 """Minimal song request web app: guest submission form + DJ queue page."""
 
+import io
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Form, Request
 from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+import qrcode
+import qrcode.image.svg
 
 import db
 
+# Load a .env file from the repo root into the process environment, if one
+# exists. Called once at module level, before anything below reads an env
+# var (DJ_KEY, PUBLIC_URL). If no .env file exists, this is a safe no-op.
+load_dotenv()
+
 BASE_DIR = Path(__file__).resolve().parent
+
+MIN_DJ_KEY_LENGTH = 16
 
 app = FastAPI()
 
@@ -21,8 +32,38 @@ if static_dir.is_dir():
     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
 
+def _dj_key_startup_error(dj_key):
+    """Return a startup error message for an unacceptable DJ_KEY, or None.
+
+    Pure function: no env reads, no exceptions raised here - just the
+    candidate key value (or None) in, and either an error message string
+    describing what's wrong (missing vs. too short) or None if the key is
+    acceptable. Kept pure and side-effect-free so it's trivial to unit test.
+    """
+    if not dj_key:
+        return (
+            "DJ_KEY is missing. Set DJ_KEY in your .env file (see "
+            ".env.example) to a random string at least {} characters "
+            "long.".format(MIN_DJ_KEY_LENGTH)
+        )
+    if len(dj_key) < MIN_DJ_KEY_LENGTH:
+        return (
+            "DJ_KEY is too short ({} characters); it must be at least {} "
+            "characters long.".format(len(dj_key), MIN_DJ_KEY_LENGTH)
+        )
+    return None
+
+
+def _validate_dj_key_or_raise():
+    """Raise RuntimeError with a clear message if DJ_KEY is unacceptable."""
+    error = _dj_key_startup_error(os.environ.get("DJ_KEY"))
+    if error:
+        raise RuntimeError(error)
+
+
 @app.on_event("startup")
 def on_startup():
+    _validate_dj_key_or_raise()
     db.init_db(db.get_db_path())
 
 
@@ -135,3 +176,35 @@ def dj_dismiss(key: str = None, request_ids: str = Form(...), conn=Depends(get_d
     db.set_status_for_ids(conn, ids, "dismissed")
 
     return RedirectResponse(url="/dj?key={}".format(key), status_code=303)
+
+
+@app.get("/qr", response_class=HTMLResponse)
+def qr(request: Request):
+    """Public, printable "scan to request a song" page.
+
+    No DJ_KEY required - this is meant to be printed and posted publicly
+    for guests to scan. PUBLIC_URL is read fresh from the environment on
+    every request (not cached at import time), the same way DJ_KEY is read
+    elsewhere in this module.
+    """
+    public_url = os.environ.get("PUBLIC_URL")
+    if not public_url or not public_url.strip():
+        return PlainTextResponse("PUBLIC_URL is not configured", status_code=500)
+
+    public_url = public_url.strip()
+
+    qr_img = qrcode.make(public_url, image_factory=qrcode.image.svg.SvgPathImage)
+    buffer = io.BytesIO()
+    qr_img.save(buffer)
+    qr_svg = buffer.getvalue().decode("utf-8")
+    if qr_svg.startswith("<?xml"):
+        # Drop the XML declaration so this is embeddable directly as inline
+        # HTML markup (via Jinja2's `| safe`) rather than as a standalone
+        # XML document.
+        qr_svg = qr_svg.split("?>", 1)[1].lstrip()
+
+    return templates.TemplateResponse(
+        request,
+        "qr.html",
+        {"qr_svg": qr_svg, "public_url": public_url},
+    )

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>Scan to Request a Song</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <main class="page qr-page">
+    <h1>Scan to request a song</h1>
+
+    <div class="qr-code">
+      {{ qr_svg | safe }}
+    </div>
+
+    <p class="qr-fallback-label">Can't scan? Go to:</p>
+    <p class="qr-fallback-url">{{ public_url }}</p>
+  </main>
+</body>
+</html>
