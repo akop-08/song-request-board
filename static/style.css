@@ -1,0 +1,189 @@
+/* Shared minimal mobile-first styling for the song request board. */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 18px;
+  line-height: 1.4;
+  background: #f4f4f6;
+  color: #1a1a1a;
+}
+
+.page {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 20px 16px 60px;
+}
+
+h1 {
+  font-size: 1.6rem;
+  margin: 8px 0 20px;
+  text-align: center;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+label {
+  display: block;
+  font-weight: 600;
+  margin: 16px 0 6px;
+}
+
+label:first-of-type {
+  margin-top: 0;
+}
+
+.optional {
+  font-weight: 400;
+  color: #777;
+}
+
+input[type="text"] {
+  width: 100%;
+  min-height: 48px;
+  font-size: 1.05rem;
+  padding: 10px 14px;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  background: #fff;
+}
+
+input[type="text"]:focus {
+  outline: none;
+  border-color: #4a6cf7;
+}
+
+.button {
+  display: inline-block;
+  min-height: 48px;
+  width: 100%;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-align: center;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+.submit-button {
+  margin-top: 20px;
+  background: #4a6cf7;
+  color: #fff;
+}
+
+.submit-button:active {
+  background: #3a57d1;
+}
+
+.confirmation {
+  text-align: center;
+}
+
+.confirmation-icon {
+  font-size: 2.5rem;
+  color: #2ea043;
+  margin: 0;
+}
+
+.confirmation .button {
+  margin-top: 16px;
+  background: #4a6cf7;
+  color: #fff;
+}
+
+.error {
+  color: #c0392b;
+  font-weight: 600;
+  margin-top: 0;
+}
+
+/* DJ page */
+
+.request-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.request-row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.request-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.count-badge {
+  display: inline-block;
+  background: #4a6cf7;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 2px 10px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.request-artist {
+  margin: 2px 0;
+  color: #333;
+}
+
+.request-requester {
+  margin: 2px 0;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.request-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.request-actions form {
+  flex: 1;
+  margin: 0;
+}
+
+.played-button {
+  background: #2ea043;
+  color: #fff;
+}
+
+.played-button:active {
+  background: #238636;
+}
+
+.dismiss-button {
+  background: #e5e5e5;
+  color: #333;
+}
+
+.dismiss-button:active {
+  background: #d0d0d0;
+}
+
+.empty-state {
+  text-align: center;
+  color: #777;
+  font-size: 1.1rem;
+  margin-top: 40px;
+}

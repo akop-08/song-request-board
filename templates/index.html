@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>Request a Song</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <main class="page">
+    <h1>Request a Song</h1>
+
+    {% if confirmation %}
+      <section class="card confirmation">
+        <p class="confirmation-icon">&#10003;</p>
+        <h2>Request received!</h2>
+        <p>
+          <strong>{{ title }}</strong> by <strong>{{ artist }}</strong>
+          has been added to the DJ's queue.
+        </p>
+        <a class="button" href="/">Request another song</a>
+      </section>
+    {% else %}
+      <section class="card">
+        {% if error %}
+          <p class="error">{{ error }}</p>
+        {% endif %}
+        <form method="post" action="/submit" novalidate>
+          <label for="title">Song title</label>
+          <input
+            type="text"
+            id="title"
+            name="title"
+            value="{{ title or '' }}"
+            placeholder="e.g. Don't Stop Believin'"
+            required
+            autofocus
+          >
+
+          <label for="artist">Artist</label>
+          <input
+            type="text"
+            id="artist"
+            name="artist"
+            value="{{ artist or '' }}"
+            placeholder="e.g. Journey"
+            required
+          >
+
+          <label for="requester_name">Your name <span class="optional">(optional)</span></label>
+          <input
+            type="text"
+            id="requester_name"
+            name="requester_name"
+            value="{{ requester_name or '' }}"
+            placeholder="e.g. Andy"
+          >
+
+          <button type="submit" class="button submit-button">Send request</button>
+        </form>
+      </section>
+    {% endif %}
+  </main>
+</body>
+</html>

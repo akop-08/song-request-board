@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta http-equiv="refresh" content="10">
+  <title>DJ Queue</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <main class="page">
+    <h1>DJ Queue</h1>
+
+    {% if requests %}
+      <ul class="request-list">
+        {% for item in requests %}
+          <li class="card request-row">
+            <div class="request-info">
+              <p class="request-title">
+                {{ item.title }}
+                {% if item.count > 1 %}
+                  <span class="count-badge">&times;{{ item.count }}</span>
+                {% endif %}
+              </p>
+              <p class="request-artist">{{ item.artist }}</p>
+              <p class="request-requester">
+                {% if item.requester_names %}
+                  requested by {{ item.requester_names | join(", ") }}
+                {% else %}
+                  requested by Anonymous
+                {% endif %}
+              </p>
+            </div>
+            <div class="request-actions">
+              <form method="post" action="/dj/played?key={{ key }}">
+                <input type="hidden" name="request_ids" value="{{ item.request_ids | join(',') }}">
+                <button type="submit" class="button played-button">Played</button>
+              </form>
+              <form method="post" action="/dj/dismiss?key={{ key }}">
+                <input type="hidden" name="request_ids" value="{{ item.request_ids | join(',') }}">
+                <button type="submit" class="button dismiss-button">Dismiss</button>
+              </form>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="empty-state">No requests yet</p>
+    {% endif %}
+  </main>
+</body>
+</html>
